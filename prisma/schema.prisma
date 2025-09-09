@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Users table
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+// Workflows table
+model Workflow {
+  id      String @id @default(cuid())
+  name    String
+  trigger String // e.g., "onUserSignup"
+  action  String // e.g., "sendEmail"
+  config  Json   // Configuration JSON for the workflow
+  
+  // Relations
+  logs Log[]
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("workflows")
+}
+
+// Logs table
+model Log {
+  id         String   @id @default(cuid())
+  workflowId String   @map("workflow_id")
+  action     String
+  status     String   // e.g., "success", "failed", "pending"
+  message    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@map("logs")
+}
